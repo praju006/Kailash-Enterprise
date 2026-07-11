@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id     Int    @id @default(autoincrement())
+  slug   String @unique
+  name   String
+  desc   String
+  accent String
+  images String // JSON array of Pexels photo IDs, e.g. "[123,456]"
+}
+
+model Product {
+  id         Int         @id @default(autoincrement())
+  name       String
+  category   String
+  price      Int
+  oldPrice   Int?
+  rating     Float       @default(4.5)
+  reviews    Int         @default(0)
+  badge      String?
+  colors     String // JSON string: [{"name":"Maroon","hex":"#8b1e2b"}]
+  images     String // JSON array of Pexels photo IDs, e.g. "[123,456]"
+  desc       String
+  active     Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  orderItems OrderItem[]
+}
+
+model Order {
+  id                Int           @id @default(autoincrement())
+  orderNumber       String        @unique
+  customerName      String
+  email             String
+  phone             String
+  address           String
+  city              String
+  state             String
+  pincode           String
+  paymentMethod     String // upi
+  paymentStatus     String        @default("pending") // pending | awaiting_verification | paid | failed
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  status            String        @default("Processing") // Processing | Confirmed | Shipped | Out for Delivery | Delivered | Cancelled
+  subtotal          Int
+  discount          Int           @default(0)
+  shipping          Int           @default(0)
+  total             Int
+  promoCode         String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  items             OrderItem[]
+  statusHistory     StatusEvent[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product? @relation(fields: [productId], references: [id])
+  name      String
+  price     Int
+  qty       Int
+  color     String?
+}
+
+model StatusEvent {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
