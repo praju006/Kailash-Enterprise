@@ -82,9 +82,14 @@ model StatusEvent {
   createdAt DateTime @default(now())
 }
 
-model AdminUser {
+model User {
   id           Int      @id @default(autoincrement())
-  username     String   @unique
-  passwordHash String
+  email        String   @unique
+  name         String?
+  passwordHash String? // null for Google-only accounts / pre-provisioned role invites
+  role         String? // null = customer/no admin access | "admin" | "manager"
+  provider     String   @default("password") // "password" | "google"
+  active       Boolean  @default(true)
   createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

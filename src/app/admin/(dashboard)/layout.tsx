@@ -1,10 +1,19 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import AdminLogoutButton from '@/components/admin/AdminLogoutButton';
 import { BagIcon, CheckIcon, MenuIcon } from '@/components/ui/Icons';
 
+const ROLE_LABEL: Record<string, string> = { admin: 'Owner / Admin', manager: 'Store Manager' };
+
 export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
+
+  // Authenticated but no role → not staff. Send them back to the storefront.
+  if (!session || !session.role) {
+    redirect('/');
+  }
+  const isAdmin = session.role === 'admin';
 
   return (
     <div className="min-h-screen flex bg-cream-dark">
@@ -25,9 +34,15 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
           <Link href="/admin/products" className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/10 transition-colors text-sm font-medium">
             <BagIcon className="w-4 h-4" /> Products
           </Link>
+          {isAdmin && (
+            <Link href="/admin/team" className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg hover:bg-white/10 transition-colors text-sm font-medium">
+              <MenuIcon className="w-4 h-4" /> Team
+            </Link>
+          )}
         </nav>
         <div className="p-4 border-t border-white/10">
-          <div className="text-xs text-[#d8c19a] mb-2">Signed in as {session?.username}</div>
+          <div className="text-xs text-[#d8c19a] mb-0.5">{session.name || session.email}</div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.08em] text-gold-light mb-2">{ROLE_LABEL[session.role] || session.role}</div>
           <AdminLogoutButton />
         </div>
       </aside>

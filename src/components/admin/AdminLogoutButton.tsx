@@ -2,9 +2,9 @@
 
 export default function AdminLogoutButton({ compact = false }: { compact?: boolean }) {
   async function handleLogout() {
-    await fetch('/api/admin/logout', { method: 'POST' });
+    await fetch('/api/auth/logout', { method: 'POST' });
     // Hard navigation so middleware re-evaluates the now-cleared session cookie.
-    window.location.href = '/admin/login';
+    window.location.href = '/login';
   }
 
   return (

@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireRole, ADMIN_ROLES } from '@/lib/auth';
 import { bodyTooLarge, cleanString, cleanNumber } from '@/lib/security';
 
+// Photos are stored inline as base64 data URIs, so allow a generous payload.
+const MAX_BODY_BYTES = 15_000_000;
+const MAX_IMAGES_CHARS = 12_000_000;
+
+// Bust the cached storefront routes so admin edits appear on the live site immediately.
+function revalidateStorefront() {
+  revalidatePath('/');
+  revalidatePath('/shop');
+}
+
 export async function GET() {
-  const session = await getSession();
+  const session = await requireRole(ADMIN_ROLES);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const products = await prisma.product.findMany({ orderBy: { id: 'asc' } });
@@ -12,10 +23,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireRole(ADMIN_ROLES);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const oversized = bodyTooLarge(req, 200_000);
+  const oversized = bodyTooLarge(req, MAX_BODY_BYTES);
   if (oversized) return oversized;
 
   const body = await req.json().catch(() => null);
@@ -43,7 +54,7 @@ export async function POST(req: NextRequest) {
       oldPrice,
       badge: badge || null,
       colors: typeof colors === 'string' ? colors.slice(0, 5000) : JSON.stringify(colors || []),
-      images: typeof images === 'string' ? images.slice(0, 10_000) : JSON.stringify(images || []),
+      images: typeof images === 'string' ? images.slice(0, MAX_IMAGES_CHARS) : JSON.stringify(images || []),
       desc,
       rating: rating ?? 4.5,
       reviews: reviews ?? 0,
@@ -51,5 +62,6 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  revalidateStorefront();
   return NextResponse.json({ product });
 }

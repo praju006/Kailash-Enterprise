@@ -7,6 +7,7 @@ import { formatPrice } from '@/lib/utils';
 import { useStore } from '@/context/StoreContext';
 import { HeartIcon, HeartFilledIcon, TruckIcon, RefreshIcon, ShieldIcon, CheckIcon } from '@/components/ui/Icons';
 import ProductCard from '@/components/product/ProductCard';
+import ProductGallery from '@/components/product/ProductGallery';
 
 function Stars({ rating }: { rating: number }) {
   const full = Math.floor(rating);
@@ -35,7 +36,6 @@ export default function ProductClient({ product, related, categoryName }: { prod
   const [pop, setPop] = useState(false);
 
   const discountPct = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : null;
-  const mainImage = product.images[0];
 
   function handleWishlist() {
     const active = toggleWishlist(product.id);
@@ -59,17 +59,7 @@ export default function ProductClient({ product, related, categoryName }: { prod
       <section className="section-tight pb-24 md:pb-12">
         <div className="container grid md:grid-cols-2 gap-10">
           <div className="reveal-left">
-            <div className="relative aspect-[3/4] arch-frame-subtle border-[3px] border-gold/50 overflow-hidden shadow-custom-sm bg-cream-dark">
-              {product.badge && (
-                <span className="absolute top-4 left-4 z-[3] bg-maroon text-gold-pale font-mono text-[10px] tracking-[0.06em] px-2.5 py-1.5 uppercase">
-                  {product.badge}
-                </span>
-              )}
-              {mainImage && (
-                <img src={mainImage} alt={product.name} className="w-full h-full object-cover object-top" />
-              )}
-            </div>
-            <p className="font-mono text-[10.5px] text-ink-soft mt-3 text-center">This is the exact piece — photographed as-is, no retouching.</p>
+            <ProductGallery images={product.images} alt={product.name} badge={product.badge} />
           </div>
 
           <div className="reveal-right">

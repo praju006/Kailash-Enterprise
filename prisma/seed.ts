@@ -108,16 +108,17 @@ async function main() {
     await prisma.product.updateMany({ where: { id: { in: stale.map((p) => p.id) } }, data: { active: false } });
   }
 
-  const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'anaya2026';
-  const existingAdmin = await prisma.adminUser.findUnique({ where: { username: adminUsername } });
-  if (!existingAdmin) {
-    console.log(`Creating admin user "${adminUsername}"...`);
-    const passwordHash = await bcrypt.hash(adminPassword, 10);
-    await prisma.adminUser.create({ data: { username: adminUsername, passwordHash } });
-  } else {
-    console.log(`Admin user "${adminUsername}" already exists, skipping.`);
-  }
+  // Bootstrap the first Owner (Admin). They sign in with Google using this email.
+  // If ADMIN_PASSWORD is set, they can also log in with email + password.
+  const ownerEmail = (process.env.OWNER_EMAIL || 'kailashenterprises99000@gmail.com').toLowerCase();
+  const ownerPassword = process.env.ADMIN_PASSWORD || '';
+  console.log(`Ensuring Owner account "${ownerEmail}"...`);
+  const passwordHash = ownerPassword ? await bcrypt.hash(ownerPassword, 10) : null;
+  await prisma.user.upsert({
+    where: { email: ownerEmail },
+    update: { role: 'admin', active: true, ...(passwordHash ? { passwordHash } : {}) },
+    create: { email: ownerEmail, name: 'Owner', role: 'admin', active: true, provider: 'password', passwordHash },
+  });
 
   console.log('Seed complete.');
 }

@@ -52,7 +52,7 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link href="/profile" aria-label="My Profile" className="flex items-center text-charcoal hover:text-maroon transition-colors">
+            <Link href="/login" aria-label="Sign in" className="flex items-center text-charcoal hover:text-maroon transition-colors">
               <UserIcon className="w-[18px] h-[18px]" />
             </Link>
             <Link href="/wishlist" aria-label="Wishlist" className="relative flex items-center gap-1.5 text-charcoal hover:text-maroon transition-colors">

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireRole, ADMIN_ROLES } from '@/lib/auth';
 import { sendStatusUpdateNotification } from '@/lib/notify';
 import { rateLimit, bodyTooLarge } from '@/lib/security';
 
@@ -8,7 +8,7 @@ const VALID_STATUSES = ['Processing', 'Confirmed', 'Shipped', 'Out for Delivery'
 const VALID_PAYMENT_STATUSES = ['pending', 'awaiting_verification', 'paid', 'failed', 'refunded'];
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ orderNumber: string }> }) {
-  const session = await getSession();
+  const session = await requireRole(ADMIN_ROLES);
 
   // Throttle unauthenticated lookups so order numbers can't be enumerated.
   if (!session) {
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ orde
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ orderNumber: string }> }) {
-  const session = await getSession();
+  const session = await requireRole(ADMIN_ROLES);
 
   if (!session) {
     const limited = rateLimit(req, 'order-patch', 10, 10 * 60 * 1000);

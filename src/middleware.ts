@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const SESSION_COOKIE = 'anaya_admin_session';
+const SESSION_COOKIE = 'kailash_session';
 
 const secretKey = () => {
   const secret = process.env.SESSION_SECRET;
@@ -15,10 +15,32 @@ const secretKey = () => {
   return new TextEncoder().encode(secret);
 };
 
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+  // CSRF defense-in-depth: reject cross-site state-changing API calls. Browsers
+  // always attach an Origin header on POST/PATCH/DELETE; if it's present and does
+  // not match our own host, the request came from another site — block it.
+  if (pathname.startsWith('/api/') && !SAFE_METHODS.has(req.method)) {
+    const origin = req.headers.get('origin');
+    if (origin) {
+      let sameOrigin = false;
+      try {
+        sameOrigin = new URL(origin).host === req.headers.get('host');
+      } catch {
+        sameOrigin = false;
+      }
+      if (!sameOrigin) {
+        return NextResponse.json({ error: 'Cross-origin request blocked.' }, { status: 403 });
+      }
+    }
+  }
+
+  // First-line gate: /admin requires an authenticated session. Role is enforced
+  // server-side (fresh from the DB) in the dashboard layout and every admin API.
+  if (pathname.startsWith('/admin')) {
     const token = req.cookies.get(SESSION_COOKIE)?.value;
     let valid = false;
     if (token) {
@@ -31,7 +53,8 @@ export async function middleware(req: NextRequest) {
     }
     if (!valid) {
       const url = req.nextUrl.clone();
-      url.pathname = '/admin/login';
+      url.pathname = '/login';
+      url.search = `?next=${encodeURIComponent(pathname)}`;
       return NextResponse.redirect(url);
     }
   }
@@ -40,5 +63,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/:path*'],
 };

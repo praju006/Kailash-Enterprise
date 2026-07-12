@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { formatPrice } from '@/lib/utils';
 import { CloseIcon } from '@/components/ui/Icons';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 interface Product {
   id: number;
@@ -32,9 +33,6 @@ interface FormState {
 }
 
 const EMPTY_FORM: FormState = { name: '', category: '', price: '', oldPrice: '', badge: '', colorsText: '', images: [], desc: '', active: true };
-
-const MAX_DIMENSION = 1400;
-const JPEG_QUALITY = 0.82;
 
 function parseColors(text: string) {
   return text
@@ -69,41 +67,16 @@ function firstImage(imagesJson: string): string | undefined {
   return typeof src === 'string' && (src.startsWith('/') || src.startsWith('http') || src.startsWith('data:')) ? src : undefined;
 }
 
-function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Could not read file'));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Could not decode image'));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-          const scale = MAX_DIMENSION / Math.max(width, height);
-          width = Math.round(width * scale);
-          height = Math.round(height * scale);
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return reject(new Error('Canvas not supported'));
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY));
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-export default function AdminProductsTable({ initialProducts, categories }: { initialProducts: Product[]; categories: { slug: string; name: string }[] }) {
+export default function AdminProductsTable({ initialProducts, categories, canDelete = false }: { initialProducts: Product[]; categories: { slug: string; name: string }[]; canDelete?: boolean }) {
   const [products, setProducts] = useState(initialProducts);
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const replaceIndex = useRef<number | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
 
   function openCreate() {
     setForm(EMPTY_FORM);
@@ -134,21 +107,81 @@ export default function AdminProductsTable({ initialProducts, categories }: { in
 
   async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
+    e.target.value = '';
     if (files.length === 0) return;
     setUploading(true);
     try {
-      const compressed = await Promise.all(files.map(compressImage));
-      setForm((f) => ({ ...f, images: [...f.images, ...compressed] }));
-    } catch {
-      // skip files that fail to read/decode
+      const urls = await Promise.all(files.map(uploadToCloudinary));
+      setForm((f) => ({ ...f, images: [...f.images, ...urls] }));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Photo upload failed. Please try again.');
     } finally {
       setUploading(false);
-      e.target.value = '';
     }
   }
 
   function removeImage(idx: number) {
     setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== idx) }));
+  }
+
+  // Reorder photos: index 0 is the main image shown on the storefront.
+  function moveImage(idx: number, dir: -1 | 1) {
+    setForm((f) => {
+      const imgs = [...f.images];
+      const target = idx + dir;
+      if (target < 0 || target >= imgs.length) return f;
+      [imgs[idx], imgs[target]] = [imgs[target], imgs[idx]];
+      return { ...f, images: imgs };
+    });
+  }
+
+  function setPrimary(idx: number) {
+    setForm((f) => {
+      if (idx <= 0 || idx >= f.images.length) return f;
+      const imgs = [...f.images];
+      const [chosen] = imgs.splice(idx, 1);
+      imgs.unshift(chosen);
+      return { ...f, images: imgs };
+    });
+  }
+
+  // Drag-and-drop reorder: drop photo `from` at position `to`.
+  function reorderImages(from: number, to: number) {
+    setForm((f) => {
+      if (from === to || from < 0 || to < 0 || from >= f.images.length || to >= f.images.length) return f;
+      const imgs = [...f.images];
+      const [moved] = imgs.splice(from, 1);
+      imgs.splice(to, 0, moved);
+      return { ...f, images: imgs };
+    });
+  }
+
+  // Replace one photo in place: remembers which tile, then opens the file picker.
+  function startReplace(idx: number) {
+    replaceIndex.current = idx;
+    replaceInputRef.current?.click();
+  }
+
+  async function handleReplaceFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    const idx = replaceIndex.current;
+    e.target.value = '';
+    if (!file || idx === null) return;
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      setForm((f) => {
+        if (idx >= f.images.length) return f;
+        const imgs = [...f.images];
+        imgs[idx] = url;
+        return { ...f, images: imgs };
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Photo upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+      replaceIndex.current = null;
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -241,7 +274,7 @@ export default function AdminProductsTable({ initialProducts, categories }: { in
                   <td className="p-4">{p.badge && <span className="text-xs bg-cream-dark px-2 py-0.5 rounded-full">{p.badge}</span>}</td>
                   <td className="p-4 text-right whitespace-nowrap">
                     <button onClick={() => openEdit(p)} className="text-xs text-maroon underline mr-3">Edit</button>
-                    <button onClick={() => handleDelete(p)} className="text-xs text-ink-soft underline">Delete</button>
+                    {canDelete && <button onClick={() => handleDelete(p)} className="text-xs text-ink-soft underline">Delete</button>}
                   </td>
                 </tr>
               );
@@ -296,21 +329,47 @@ export default function AdminProductsTable({ initialProducts, categories }: { in
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1.5">Photos of the actual saree</label>
+                <p className="text-xs text-ink-soft mb-2">
+                  The first photo is the <strong>main image</strong> shown on the store. <strong>Drag</strong> photos to reorder, ★ to make one the main photo, ⟳ to replace it, or × to delete.
+                </p>
                 <input type="file" accept="image/*" multiple onChange={handleFiles} className="w-full text-sm" />
-                {uploading && <p className="text-xs text-ink-soft mt-1.5">Processing photo…</p>}
+                {/* Hidden input used by the per-photo "replace" button */}
+                <input ref={replaceInputRef} type="file" accept="image/*" onChange={handleReplaceFile} className="hidden" />
+                {uploading && <p className="text-xs text-ink-soft mt-1.5">Uploading photo to Cloudinary…</p>}
                 {form.images.length > 0 && (
-                  <div className="flex flex-wrap gap-2.5 mt-3">
+                  <div className="flex flex-wrap gap-3 mt-3">
                     {form.images.map((src, i) => (
-                      <div key={i} className="relative w-16 h-20 border border-line overflow-hidden group">
-                        <img src={src} alt="" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(i)}
-                          aria-label="Remove photo"
-                          className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center text-[10px]"
-                        >
-                          ×
-                        </button>
+                      <div
+                        key={i}
+                        className="w-24"
+                        draggable
+                        onDragStart={() => setDragIndex(i)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={() => {
+                          if (dragIndex !== null) reorderImages(dragIndex, i);
+                          setDragIndex(null);
+                        }}
+                        onDragEnd={() => setDragIndex(null)}
+                      >
+                        <div className={`relative w-24 h-28 border overflow-hidden bg-cream-dark cursor-move transition-opacity ${dragIndex === i ? 'opacity-40 border-maroon' : 'border-line'}`}>
+                          <img src={src} alt={`Photo ${i + 1}`} className="w-full h-full object-cover pointer-events-none" />
+                          {i === 0 && (
+                            <span className="absolute top-0.5 left-0.5 bg-maroon text-gold-pale text-[9px] font-mono uppercase tracking-[0.05em] px-1.5 py-0.5">Main</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            aria-label="Delete photo"
+                            className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center text-[11px] leading-none"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <button type="button" onClick={() => setPrimary(i)} disabled={i === 0} aria-label="Set as main photo" title="Set as main photo" className="px-1.5 py-0.5 text-xs border border-line text-maroon disabled:opacity-30 hover:bg-cream-dark">★</button>
+                          <button type="button" onClick={() => startReplace(i)} aria-label="Replace photo" title="Replace this photo" className="px-1.5 py-0.5 text-xs border border-line hover:bg-cream-dark">⟳</button>
+                          <button type="button" onClick={() => moveImage(i, 1)} disabled={i === form.images.length - 1} aria-label="Move right" title="Move right" className="px-1.5 py-0.5 text-xs border border-line disabled:opacity-30 hover:bg-cream-dark">▶</button>
+                        </div>
                       </div>
                     ))}
                   </div>

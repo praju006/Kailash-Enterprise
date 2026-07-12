@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomInt } from 'crypto';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireRole, ADMIN_ROLES } from '@/lib/auth';
 import { sendOrderConfirmationEmail, sendOrderConfirmationSMS } from '@/lib/notify';
 import { rateLimit, bodyTooLarge, cleanString, isEmail, isPhone, isPincode } from '@/lib/security';
 
@@ -10,8 +12,8 @@ const SHIP_COST = 99;
 const MAX_CART_LINES = 20;
 
 function generateOrderNumber() {
-  const rand = Math.floor(100000 + Math.random() * 900000);
-  return `ANY${rand}`;
+  // Cryptographically-random 8 digits so order numbers can't be guessed/enumerated.
+  return `KE${randomInt(10_000_000, 100_000_000)}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -78,31 +80,41 @@ export async function POST(req: NextRequest) {
   const shipping = subtotal - discount >= FREE_SHIP_THRESHOLD ? 0 : SHIP_COST;
   const total = subtotal - discount + shipping;
 
-  const orderNumber = generateOrderNumber();
+  const orderData = {
+    customerName,
+    email,
+    phone,
+    address,
+    city,
+    state,
+    pincode,
+    paymentMethod,
+    paymentStatus: 'pending',
+    status: 'Processing',
+    subtotal,
+    discount,
+    shipping,
+    total,
+    promoCode: discountRate > 0 ? normalizedPromo : null,
+    items: { create: orderItemsData },
+    statusHistory: { create: { status: 'Processing', note: 'Order placed' } },
+  };
 
-  const order = await prisma.order.create({
-    data: {
-      orderNumber,
-      customerName,
-      email,
-      phone,
-      address,
-      city,
-      state,
-      pincode,
-      paymentMethod,
-      paymentStatus: 'pending',
-      status: 'Processing',
-      subtotal,
-      discount,
-      shipping,
-      total,
-      promoCode: discountRate > 0 ? normalizedPromo : null,
-      items: { create: orderItemsData },
-      statusHistory: { create: { status: 'Processing', note: 'Order placed' } },
-    },
-    include: { items: true },
-  });
+  // Retry if a generated order number happens to collide (unique constraint).
+  let order: Prisma.OrderGetPayload<{ include: { items: true } }> | null = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      order = await prisma.order.create({
+        data: { orderNumber: generateOrderNumber(), ...orderData },
+        include: { items: true },
+      });
+      break;
+    } catch (e) {
+      if ((e as { code?: string })?.code === 'P2002' && attempt < 4) continue;
+      throw e;
+    }
+  }
+  if (!order) return NextResponse.json({ error: 'Could not place order, please try again.' }, { status: 500 });
 
   // Best-effort notifications — never fail order placement because of them.
   const notifyPayload = {
@@ -129,7 +141,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await getSession();
+  const session = await requireRole(ADMIN_ROLES);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const orders = await prisma.order.findMany({

@@ -14,6 +14,15 @@ function formatINR(n: number) {
   return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 }
 
+// Escape any user- or catalog-supplied text before placing it in email HTML.
+function esc(value: string) {
+  return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+}
+
+function firstName(name: string) {
+  return esc(name.split(' ')[0] || 'there');
+}
+
 export async function sendOrderConfirmationEmail(order: OrderForNotify) {
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM } = process.env;
 
@@ -30,13 +39,13 @@ export async function sendOrderConfirmationEmail(order: OrderForNotify) {
   });
 
   const itemsHtml = order.items
-    .map((i) => `<tr><td style="padding:6px 0">${i.name} × ${i.qty}</td><td style="padding:6px 0;text-align:right">${formatINR(i.price * i.qty)}</td></tr>`)
+    .map((i) => `<tr><td style="padding:6px 0">${esc(i.name)} × ${i.qty}</td><td style="padding:6px 0;text-align:right">${formatINR(i.price * i.qty)}</td></tr>`)
     .join('');
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#2b1810">
-      <h2 style="color:#58152a">Thank you for your order, ${order.customerName.split(' ')[0]}!</h2>
-      <p>Your order <strong>${order.orderNumber}</strong> has been confirmed.</p>
+      <h2 style="color:#58152a">Thank you for your order, ${firstName(order.customerName)}!</h2>
+      <p>Your order <strong>${esc(order.orderNumber)}</strong> has been confirmed.</p>
       <table style="width:100%;border-collapse:collapse;margin:16px 0">${itemsHtml}</table>
       <p><strong>Total: ${formatINR(order.total)}</strong> (${order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod.toUpperCase()})</p>
       <p>Track your order anytime at kailashenterprises.com/track using order number <strong>${order.orderNumber}</strong>.</p>
@@ -102,8 +111,8 @@ export async function sendStatusUpdateNotification(order: { orderNumber: string;
         to: order.email,
         subject: `Order ${order.orderNumber} — ${status} | Kailash Enterprises`,
         html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#2b1810">
-          <h2 style="color:#58152a">Hi ${order.customerName.split(' ')[0]}, your order is now: ${status}</h2>
-          <p>Order <strong>${order.orderNumber}</strong> status has been updated to <strong>${status}</strong>.</p>
+          <h2 style="color:#58152a">Hi ${firstName(order.customerName)}, your order is now: ${esc(status)}</h2>
+          <p>Order <strong>${esc(order.orderNumber)}</strong> status has been updated to <strong>${esc(status)}</strong>.</p>
           <p>Track it anytime at kailashenterprises.com/track.</p>
         </div>`,
       });

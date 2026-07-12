@@ -6,9 +6,10 @@ import Footer from './Footer';
 
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname?.startsWith('/admin');
+  // Full-screen surfaces (admin dashboard, auth screens) render without the storefront chrome.
+  const bare = pathname?.startsWith('/admin') || pathname === '/login' || pathname === '/register';
 
-  if (isAdmin) {
+  if (bare) {
     return <main>{children}</main>;
   }
 
