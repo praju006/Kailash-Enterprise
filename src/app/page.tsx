@@ -1,6 +1,8 @@
-import Link from 'next/link';
 import Hero from '@/components/home/Hero';
 import Marquee from '@/components/home/Marquee';
+import CategoryTiles from '@/components/home/CategoryTiles';
+import ShopByOccasion from '@/components/home/ShopByOccasion';
+import ShopByPattern from '@/components/home/ShopByPattern';
 import BentoCategories from '@/components/home/BentoCategories';
 import CraftStory from '@/components/home/CraftStory';
 import SaleCountdown from '@/components/home/SaleCountdown';
@@ -21,22 +23,21 @@ export default async function HomePage() {
     <>
       <Hero products={products} />
 
+      <CategoryTiles categories={categories} />
+
+      <ShopByOccasion />
+
       <BentoCategories categories={categories} products={products} />
 
       <SaleCountdown />
 
-      {/* The Stock — editorial product grid */}
-      <section className="section relative" style={{ background: '#FFFCF4' }}>
+      {/* The Stock — product grid */}
+      <section className="section relative bg-white">
         <div className="container relative">
-          <div className="flex flex-wrap items-end justify-between gap-6 mb-12 reveal">
-            <div>
-              <span className="eyebrow">Fresh Off The Loom</span>
-              <h2 className="display-big text-charcoal mt-3 mb-0">This Week&apos;s Stock</h2>
-              <p className="section-sub !mx-0 !text-left mt-4 mb-0">Shot as-is, no retouching. What you see is what ships.</p>
-            </div>
-            <Link href="/shop" className="link-slide font-mono text-[12px] uppercase tracking-[0.08em] text-maroon mb-2">
-              Browse everything →
-            </Link>
+          <div className="text-center mb-10 reveal">
+            <span className="eyebrow justify-center">Fresh Off The Loom</span>
+            <h2 className="display-big text-ink mt-2 mb-0">This Week&apos;s Stock</h2>
+            <p className="section-sub mt-3 mb-0">Shot as-is, no retouching. What you see is what ships.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {featured.map((p, i) => (
@@ -47,6 +48,8 @@ export default async function HomePage() {
       </section>
 
       <TrustStrip />
+
+      <ShopByPattern />
 
       <CraftStory image={products[6]?.images[0] || products[0]?.images[0]} />
 

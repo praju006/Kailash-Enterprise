@@ -13,6 +13,17 @@ const NAV_LINKS = [
   { href: '/contact', label: 'Contact' },
 ];
 
+// Kalyan-style category strip below the main header.
+const CATEGORY_STRIP = [
+  { href: '/shop', label: 'All Sarees' },
+  { href: '/shop?category=kalamkari', label: 'Kalamkari & Warli' },
+  { href: '/shop?category=bandhani', label: 'Bandhani Border' },
+  { href: '/shop?category=printed', label: 'Woven Stripe' },
+  { href: '/shop', label: 'Bridal' },
+  { href: '/shop', label: 'New Arrivals' },
+  { href: '/shop', label: 'Sale' },
+];
+
 export default function Header() {
   const [navOpen, setNavOpen] = useState(false);
   const { cartCount, wishlistCount } = useStore();
@@ -81,6 +92,21 @@ export default function Header() {
           </div>
         </div>
       </header>
+
+      {/* Category strip (desktop) — mainstream heritage-retailer browse bar */}
+      <div className="hidden md:block bg-ink text-white sticky top-0 z-[99]">
+        <div className="container">
+          <ul className="flex items-center justify-center gap-7 py-2.5 font-mono text-[12px] font-medium uppercase tracking-[0.06em]">
+            {CATEGORY_STRIP.map((c) => (
+              <li key={c.label}>
+                <Link href={c.href} className={`transition-colors ${c.label === 'Sale' ? 'text-maroon-light hover:text-white' : 'text-white/85 hover:text-maroon-light'}`}>
+                  {c.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
       <div className="h-px bg-line" />
 
       <style jsx>{`

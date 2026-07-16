@@ -8,32 +8,35 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Kalyan-style brand red is the primary/action colour (mapped onto the
+        // former "maroon" token so every existing usage flips automatically).
         maroon: {
-          DEFAULT: '#8B1D2C',
-          dark: '#671420',
-          light: '#A3283A',
+          DEFAULT: '#D81E28',
+          dark: '#AF141C',
+          light: '#E94A52',
         },
         gold: {
-          DEFAULT: '#C89B3C',
-          light: '#F4E4B8',
-          pale: '#FBEFCE',
+          DEFAULT: '#C6A15B',
+          light: '#EBD9AE',
+          pale: '#F6EFDD',
           deep: '#9C7526',
         },
+        // Page background is now white; "cream.dark" is a soft off-white section fill.
         cream: {
-          DEFAULT: '#FFFCF4',
-          dark: '#FBF3DF',
+          DEFAULT: '#FFFFFF',
+          dark: '#F7F4EF',
         },
         blush: '#e8b4b8',
-        ink: '#2B2118',
-        'ink-soft': '#5A4A3A',
-        charcoal: '#3A2F22',
-        line: 'rgba(200,155,60,0.35)',
-        success: '#3f7d4f',
+        ink: '#1A1A1A',
+        'ink-soft': '#565656',
+        charcoal: '#1A1A1A',
+        line: 'rgba(0,0,0,0.12)',
+        success: '#2e7d46',
       },
       fontFamily: {
-        head: ['Bebas Neue', 'Georgia', 'sans-serif'],
+        head: ['Montserrat', 'Poppins', 'sans-serif'],
         body: ['Poppins', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'monospace'],
+        mono: ['Montserrat', 'Poppins', 'sans-serif'],
       },
       borderRadius: {
         'xl': '10px',

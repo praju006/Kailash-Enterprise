@@ -63,15 +63,20 @@ function mapCategory(c: { slug: string; name: string; desc: string; accent: stri
 // with a transient "closed connection" / "can't reach server" error. One retry
 // after a short pause reliably recovers.
 async function withRetry<T>(query: () => Promise<T>): Promise<T> {
-  try {
-    return await query();
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    const transient = /closed the connection|Can't reach database server|Connection reset|ECONNRESET|Timed out/i.test(msg);
-    if (!transient) throw err;
-    await new Promise((r) => setTimeout(r, 400));
-    return query();
+  const backoffs = [400, 1000, 2000];
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= backoffs.length; attempt++) {
+    try {
+      return await query();
+    } catch (err) {
+      lastErr = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      const transient = /closed the connection|Can't reach database server|Connection reset|ECONNRESET|Timed out|pool timeout/i.test(msg);
+      if (!transient || attempt === backoffs.length) throw err;
+      await new Promise((r) => setTimeout(r, backoffs[attempt]));
+    }
   }
+  throw lastErr;
 }
 
 export async function getActiveProducts(): Promise<CatalogProduct[]> {

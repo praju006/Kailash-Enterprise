@@ -1,79 +1,83 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CatalogProduct } from '@/lib/catalog';
-import { formatPrice } from '@/lib/utils';
 import Marquee from './Marquee';
 
+interface Slide {
+  image: string;
+  eyebrow: string;
+  title: string;
+  sub: string;
+  href: string;
+  cta: string;
+}
+
 export default function Hero({ products }: { products: CatalogProduct[] }) {
-  const main = products[0];
-  const side = products[6] || products[1];
+  const pics = products.filter((p) => p.images[0]).map((p) => p.images[0]);
+  const slides: Slide[] = [
+    { image: pics[0], eyebrow: 'New Arrivals', title: 'The Festive\nSaree Collection', sub: 'Handwoven Kalamkari, Warli & Bandhani — photographed exactly as they ship.', href: '/shop', cta: 'Shop Now' },
+    { image: pics[6] || pics[1], eyebrow: 'Direct From The Loom', title: 'Real Stock,\nReal Sarees', sub: 'No stock imagery. What you see on the page is the exact piece delivered to you.', href: '/shop', cta: 'Explore Collection' },
+    { image: pics[2] || pics[0], eyebrow: 'Weaver Partners', title: 'A Century\nof Craft', sub: 'Sourced directly from our weaver partners across India.', href: '/about', cta: 'Our Story' },
+  ].filter((s) => s.image);
+
+  const [active, setActive] = useState(0);
+  const count = slides.length;
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (count <= 1) return;
+    timer.current = setInterval(() => setActive((a) => (a + 1) % count), 5500);
+    return () => { if (timer.current) clearInterval(timer.current); };
+  }, [count]);
+
+  function go(i: number) {
+    setActive((i + count) % count);
+    if (timer.current) clearInterval(timer.current);
+    timer.current = setInterval(() => setActive((a) => (a + 1) % count), 5500);
+  }
+
+  if (count === 0) return <Marquee items={['100% Real Stock Photos', 'Direct From Weaver Partners', 'Pay by UPI QR', 'Free Shipping Above ₹2,999']} />;
 
   return (
-    <section className="relative overflow-hidden bg-cream">
-      <div className="container relative pt-14 md:pt-20 pb-0">
-        <div className="relative grid md:grid-cols-12 gap-8 items-end">
-          {/* Left: headline block */}
-          <div className="md:col-span-7 reveal-left relative z-[2] pb-12 md:pb-20">
-            <span className="eyebrow">Est. Sourcing Direct &middot; Real Stock Only</span>
-            <h1 className="display-huge text-charcoal mt-5">
-              Draped
-              <br />
-              in <span className="text-maroon">real</span>
-              <br />
-              stories<span className="text-gold-deep">.</span>
-            </h1>
-            <p className="max-w-[400px] mt-7 text-[16px] leading-relaxed text-charcoal/70">
-              Kalamkari, Warli and Bandhani sarees — photographed exactly as they are,
-              shipped exactly as you see them. No stock imagery, ever.
-            </p>
-            <div className="flex items-center gap-6 mt-9 flex-wrap">
-              <Link href="/shop" className="btn-primary px-9 py-4">Shop the Stock</Link>
-              <Link href="/about" className="link-slide font-mono text-[12px] uppercase tracking-[0.08em] text-maroon">
-                Why real photos matter →
-              </Link>
+    <section className="relative">
+      <div className="relative h-[460px] sm:h-[560px] md:h-[640px] overflow-hidden bg-ink">
+        {slides.map((s, i) => (
+          <div
+            key={i}
+            className="absolute inset-0 transition-opacity duration-700"
+            style={{ opacity: i === active ? 1 : 0, zIndex: i === active ? 1 : 0 }}
+          >
+            <img src={s.image} alt={s.title} className="w-full h-full object-cover object-top" />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.05) 75%)' }} />
+            <div className="absolute inset-0 flex items-center">
+              <div className="container">
+                <div className="max-w-[560px] text-white">
+                  <span className="inline-block bg-maroon text-white font-mono text-[11px] font-semibold uppercase tracking-[0.14em] px-3 py-1.5">{s.eyebrow}</span>
+                  <h1 className="display-big text-white mt-5 whitespace-pre-line" style={{ textShadow: '0 2px 24px rgba(0,0,0,0.4)' }}>{s.title}</h1>
+                  <p className="mt-4 text-[15px] md:text-[17px] text-white/90 max-w-[440px]">{s.sub}</p>
+                  <Link href={s.href} className="btn-primary px-9 py-4 mt-7">{s.cta}</Link>
+                </div>
+              </div>
             </div>
           </div>
+        ))}
 
-          {/* Right: dominant editorial image */}
-          <div className="md:col-span-5 reveal-right relative z-[2]">
-            <div className="img-zoom relative aspect-[3/4] max-h-[560px] w-full border-2 border-gold/60 shadow-[0_40px_80px_-32px_rgba(103,20,32,0.45)]">
-              {main && (
-                <img
-                  src={main.images[0]}
-                  alt={main.name}
-                  className="w-full h-full object-cover"
-                  style={{ objectPosition: 'center 8%' }}
-                />
-              )}
-              <div className="absolute top-4 left-4 bg-maroon text-gold-pale font-mono text-[10px] tracking-[0.08em] px-3 py-2 uppercase">
-                Real Stock Photo
-              </div>
-              {main && (
-                <Link
-                  href={`/product/${main.id}`}
-                  className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-cream/95 backdrop-blur px-4 py-3 border border-gold/40 hover:bg-cream transition-colors"
-                >
-                  <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.06em] text-gold-deep">{main.badge || 'In stock'}</div>
-                    <div className="font-head text-[16px] tracking-[0.04em] text-charcoal mt-0.5">{main.name}</div>
-                  </div>
-                  <div className="font-anton text-[19px] text-maroon">{formatPrice(main.price)}</div>
-                </Link>
-              )}
+        {count > 1 && (
+          <>
+            <button onClick={() => go(active - 1)} aria-label="Previous" className="absolute left-4 top-1/2 -translate-y-1/2 z-[3] w-10 h-10 rounded-full bg-white/85 hover:bg-white text-ink flex items-center justify-center text-xl">‹</button>
+            <button onClick={() => go(active + 1)} aria-label="Next" className="absolute right-4 top-1/2 -translate-y-1/2 z-[3] w-10 h-10 rounded-full bg-white/85 hover:bg-white text-ink flex items-center justify-center text-xl">›</button>
+            <div className="absolute bottom-5 left-0 right-0 z-[3] flex justify-center gap-2">
+              {slides.map((_, i) => (
+                <button key={i} onClick={() => go(i)} aria-label={`Slide ${i + 1}`} className={`h-2 rounded-full transition-all ${i === active ? 'w-7 bg-maroon' : 'w-2 bg-white/70'}`} />
+              ))}
             </div>
-
-            {/* Small offset accent photo */}
-            {side && (
-              <div className="hidden lg:block img-zoom absolute -left-32 top-14 w-[140px] aspect-[3/4] border-2 border-gold bg-white shadow-custom rotate-[-4deg]">
-                <img src={side.images[0]} alt={side.name} className="w-full h-full object-cover" style={{ objectPosition: 'center 10%' }} />
-              </div>
-            )}
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
-      <Marquee
-        items={['100% Real Stock Photos', 'Direct From Weaver Partners', 'Pay by UPI QR', 'Free Shipping Above ₹2,999', '7-Day Easy Exchange']}
-      />
+      <Marquee items={['100% Real Stock Photos', 'Direct From Weaver Partners', 'Pay by UPI QR', 'Free Shipping Above ₹2,999', '7-Day Easy Exchange']} />
     </section>
   );
 }

@@ -13,9 +13,9 @@ html {
 body {
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  font-weight: 300;
-  color: #2B2118;
-  background-color: #FFFCF4;
+  font-weight: 400;
+  color: #1A1A1A;
+  background-color: #FFFFFF;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -49,17 +49,18 @@ textarea {
 }
 
 h1, h2, h3, h4 {
-  font-family: 'Bebas Neue', Georgia, sans-serif;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
   margin: 0 0 0.5em;
-  color: #3A2F22;
-  font-weight: 400;
-  letter-spacing: 0.015em;
+  color: #1A1A1A;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
-/* Heaviest display moments (Hero headline, big stat numbers) get the punchiest weight */
+/* Heaviest display moments (hero headline, big numbers) get a bold sans weight */
 .font-anton {
-  font-family: 'Anton', Georgia, sans-serif;
-  letter-spacing: 0.01em;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 p {
@@ -75,36 +76,36 @@ p {
 }
 
 :focus-visible {
-  outline: 2px solid #8B1D2C;
+  outline: 2px solid #D81E28;
   outline-offset: 3px;
 }
 
-/* ---------- eyebrow (mono, small gold rule before) ---------- */
+/* ---------- eyebrow (uppercase red label with a short rule) ---------- */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
   font-size: 11px;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #8B1D2C;
-  font-weight: 500;
+  color: #D81E28;
+  font-weight: 600;
   margin-bottom: 10px;
 }
 .eyebrow::before {
   content: '';
   width: 22px;
-  height: 1px;
-  background: #9C7526;
+  height: 2px;
+  background: #D81E28;
   display: inline-block;
 }
 
-/* ---------- gold foil rule (signature texture strip) ---------- */
+/* ---------- brand rule (thin red accent strip) ---------- */
 .foil-rule {
-  height: 6px;
+  height: 4px;
   width: 100%;
-  background: repeating-linear-gradient(90deg, #C89B3C 0 18px, #F4E4B8 18px 26px, #9C7526 26px 32px);
+  background: #D81E28;
 }
 
 /* ---------- grow-line (hover underline accent) ---------- */
@@ -205,78 +206,81 @@ p {
   opacity: 0.85;
 }
 .btn-primary {
-  background: #8B1D2C;
-  color: #FBEFCE;
-  transition: all 0.25s ease;
+  background: #D81E28;
+  color: #FFFFFF;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  font-weight: 600;
   font-size: 12.5px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .btn-primary:hover {
-  background: #671420;
-  transform: translateY(-2px);
+  background: #AF141C;
 }
 .btn-outline {
   background: transparent;
-  border: 1px solid #8B1D2C;
-  color: #8B1D2C;
-  transition: all 0.25s ease;
+  border: 1px solid #1A1A1A;
+  color: #1A1A1A;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  font-weight: 600;
   font-size: 12.5px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .btn-outline:hover {
-  background: #8B1D2C;
+  background: #1A1A1A;
   color: #fff;
 }
 .btn-gold {
-  background: #C89B3C;
-  color: #671420;
-  border: 1px solid #9C7526;
-  transition: all 0.25s ease;
+  background: #1A1A1A;
+  color: #FFFFFF;
+  border: 1px solid #1A1A1A;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  font-weight: 600;
   font-size: 12.5px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 .btn-gold:hover {
-  background: #F4E4B8;
-  transform: translateY(-2px);
+  background: #D81E28;
+  border-color: #D81E28;
 }
 
-/* ---------- Editorial display type ---------- */
+/* ---------- Bold sans display type ---------- */
 .display-huge {
-  font-family: 'Anton', Georgia, sans-serif;
-  font-size: clamp(2.6rem, 7.5vw, 6.5rem);
-  line-height: 0.98;
-  text-transform: uppercase;
-  letter-spacing: 0.005em;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.4rem, 6.5vw, 5.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
 }
 .display-big {
-  font-family: 'Anton', Georgia, sans-serif;
-  font-size: clamp(2rem, 4.5vw, 3.6rem);
-  line-height: 1.02;
-  text-transform: uppercase;
+  font-family: 'Montserrat', 'Poppins', sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
 }
 /* Hollow outline type for watermark numbers / ghost words */
 .text-outline {
   color: transparent;
-  -webkit-text-stroke: 1.5px rgba(139, 29, 44, 0.28);
+  -webkit-text-stroke: 1.5px rgba(216, 30, 40, 0.3);
 }
 .text-outline-gold {
   color: transparent;
-  -webkit-text-stroke: 1.5px rgba(200, 155, 60, 0.45);
+  -webkit-text-stroke: 1.5px rgba(26, 26, 26, 0.25);
 }
 
 /* ---------- Infinite marquee ticker ---------- */
