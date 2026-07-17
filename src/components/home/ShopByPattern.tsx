@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 // Swap image paths for your own pattern/fabric close-ups.
@@ -13,10 +13,77 @@ const PATTERNS = [
 ];
 const LIFESTYLE = '/images/sarees/c4824022c1080bc8440cd250dd0d7130.jpg';
 
+const AUTOPLAY_MS = 3500;
+const SWIPE_THRESHOLD_PX = 40;
+const WHEEL_COOLDOWN_MS = 500;
+
 export default function ShopByPattern() {
   const [active, setActive] = useState(1);
+  const [paused, setPaused] = useState(false);
   const n = PATTERNS.length;
   const at = (offset: number) => PATTERNS[(active + offset + n) % n];
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const wheelLockedRef = useRef(false);
+
+  const goNext = () => setActive((a) => (a + 1) % n);
+  const goPrev = () => setActive((a) => (a - 1 + n) % n);
+
+  // Auto-advance every AUTOPLAY_MS, unless paused (hover/touch/wheel interaction) or hidden.
+  useEffect(() => {
+    if (paused) return;
+    intervalRef.current = setInterval(goNext, AUTOPLAY_MS);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [paused, active]);
+
+  function restartTimer() {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  }
+
+  function handleManualNav(fn: () => void) {
+    restartTimer();
+    fn();
+  }
+
+  // --- Touch swipe support (mobile) ---
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+    setPaused(true);
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(deltaX) > SWIPE_THRESHOLD_PX) {
+      restartTimer();
+      if (deltaX < 0) goNext();
+      else goPrev();
+    }
+    touchStartX.current = null;
+    setPaused(false);
+  }
+
+  // --- Mouse wheel support (desktop trackpads / mice with horizontal scroll) ---
+  function handleWheel(e: React.WheelEvent) {
+    // Prefer horizontal scroll delta; fall back to vertical if that's all the device reports.
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (Math.abs(delta) < 15) return; // ignore tiny/noisy wheel ticks
+    if (wheelLockedRef.current) return;
+
+    e.preventDefault();
+    restartTimer();
+    if (delta > 0) goNext();
+    else goPrev();
+
+    wheelLockedRef.current = true;
+    setTimeout(() => {
+      wheelLockedRef.current = false;
+    }, WHEEL_COOLDOWN_MS);
+  }
 
   return (
     <section className="section-tight bg-cream-dark">
@@ -29,16 +96,24 @@ export default function ShopByPattern() {
               <h2 className="text-2xl md:text-4xl font-head font-bold text-ink mt-2 mb-0">A Weave For Every Occasion</h2>
             </div>
 
-            <div className="flex items-stretch justify-center gap-3 h-[360px]">
+            <div
+              ref={trackRef}
+              className="flex items-stretch justify-center gap-3 h-[360px] touch-pan-y"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onWheel={handleWheel}
+            >
               {[-1, 0, 1].map((offset) => {
                 const p = at(offset);
                 const isActive = offset === 0;
                 return (
                   <div
                     key={offset}
-                    className={`relative overflow-hidden transition-all duration-500 ${isActive ? 'w-[46%] opacity-100' : 'w-[27%] opacity-60'}`}
+                    className={`relative overflow-hidden transition-all duration-500 select-none ${isActive ? 'w-[46%] opacity-100' : 'w-[27%] opacity-60'}`}
                   >
-                    <img src={p.image} alt={p.label} className="w-full h-full object-cover object-top" />
+                    <img src={p.image} alt={p.label} draggable={false} className="w-full h-full object-cover object-top pointer-events-none" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2" style={{ background: 'rgba(0,0,0,0.28)' }}>
                       <h3 className="font-head font-bold text-white uppercase tracking-[0.06em] text-[15px] md:text-[19px] m-0" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>{p.label}</h3>
                       {isActive && (
@@ -53,8 +128,8 @@ export default function ShopByPattern() {
             </div>
 
             <div className="flex items-center justify-center gap-4 mt-5">
-              <button onClick={() => setActive((a) => (a - 1 + n) % n)} aria-label="Previous pattern" className="w-10 h-10 rounded-full border border-ink/25 text-ink hover:bg-ink hover:text-white transition-colors flex items-center justify-center">‹</button>
-              <button onClick={() => setActive((a) => (a + 1) % n)} aria-label="Next pattern" className="w-10 h-10 rounded-full border border-ink/25 text-ink hover:bg-ink hover:text-white transition-colors flex items-center justify-center">›</button>
+              <button onClick={() => handleManualNav(goPrev)} aria-label="Previous pattern" className="w-10 h-10 rounded-full border border-ink/25 text-ink hover:bg-ink hover:text-white transition-colors flex items-center justify-center">‹</button>
+              <button onClick={() => handleManualNav(goNext)} aria-label="Next pattern" className="w-10 h-10 rounded-full border border-ink/25 text-ink hover:bg-ink hover:text-white transition-colors flex items-center justify-center">›</button>
             </div>
           </div>
 
