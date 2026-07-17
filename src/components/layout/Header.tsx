@@ -4,8 +4,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { Alex_Brush, Cormorant_Garamond } from 'next/font/google';
 import { useStore } from '@/context/StoreContext';
 import { HeartIcon, BagIcon, MenuIcon, CloseIcon, UserIcon } from '@/components/ui/Icons';
+
+// Bold flowing brush-script font matching the cursive "Kailash" lettering in the logo mark.
+const alexBrush = Alex_Brush({ subsets: ['latin'], weight: ['400'] });
+// Refined, widely-spaced serif for the "ENTERPRISES" subtitle — echoes the small-caps
+// wordmark style under the script in the reference logo instead of competing with it.
+const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['500', '600'] });
 
 const NAV_LINKS = [
   { href: '/', label: 'Home' },
@@ -42,20 +49,25 @@ export default function Header() {
         <div className="container flex items-center justify-between gap-2 py-3 sm:py-5">
           <Link
             href="/"
-            className="flex items-center gap-2 sm:gap-2.5 font-anton text-maroon uppercase leading-none shrink-0 min-w-0"
+            className="flex items-center gap-2 sm:gap-2.5 text-maroon leading-none shrink-0 min-w-0"
           >
             <Image
               src="/logo.jpeg"
               alt="Kailash Enterprises"
               width={56}
               height={56}
+              unoptimized
               className="h-9 w-9 sm:h-14 sm:w-14 object-cover rounded-full border border-gold/40 shrink-0"
               priority
             />
             {/* Stacks vertically on mobile (Kailash / Enterprises), sits side-by-side from sm up */}
-            <span className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1.5 tracking-[0.02em] min-w-0">
-              <span className="text-[15px] sm:text-[26px] leading-tight truncate">Kailash</span>
-              <span className="text-[10px] sm:text-[26px] text-gold-deep leading-tight truncate">Enterprises</span>
+            <span className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2 min-w-0">
+              <span className={`${alexBrush.className} text-[28px] sm:text-[42px] leading-tight truncate text-maroon`}>
+                Kailash
+              </span>
+              <span className={`${cormorant.className} font-semibold uppercase tracking-[0.32em] sm:tracking-[0.38em] text-[9px] sm:text-[13px] text-gold-deep leading-tight truncate pl-[2px]`}>
+                Enterprises
+              </span>
             </span>
           </Link>
 
