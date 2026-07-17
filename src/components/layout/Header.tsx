@@ -34,10 +34,11 @@ const CATEGORY_STRIP = [
 
 export default function Header() {
   const [navOpen, setNavOpen] = useState(false);
-  const { cartCount, wishlistCount } = useStore();
+  const { cartCount, wishlistCount, profile } = useStore();
   const pathname = usePathname();
 
   const closeNav = () => setNavOpen(false);
+  const initial = profile?.name?.trim()?.charAt(0)?.toUpperCase();
 
   return (
     <>
@@ -88,12 +89,51 @@ export default function Header() {
                 );
               })}
             </ul>
+
+            {/* Category strip folds into the mobile dropdown instead of disappearing entirely */}
+            <ul className="mobile-category-list md:hidden flex flex-col">
+              {CATEGORY_STRIP.map((c, i) => (
+                <li key={`${c.label}-${i}`} className="nav-item">
+                  <Link
+                    href={c.href}
+                    onClick={closeNav}
+                    className={`text-[13px] tracking-[0.03em] nav-link block ${c.label === 'Sale' ? 'text-maroon' : 'text-ink-soft'}`}
+                  >
+                    {c.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            {/* Account link inside mobile dropdown too, so it's reachable without the header icon */}
+            <ul className="md:hidden flex flex-col">
+              <li className="nav-item">
+                <Link
+                  href={profile?.name ? '/profile' : '/login'}
+                  onClick={closeNav}
+                  className="text-[14px] tracking-[0.03em] nav-link block text-charcoal"
+                >
+                  {profile?.name ? 'My Account' : 'Sign In'}
+                </Link>
+              </li>
+            </ul>
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-            <Link href="/login" aria-label="Sign in" className="hidden xs:flex items-center text-charcoal hover:text-maroon transition-colors">
-              <UserIcon className="w-[17px] h-[17px] sm:w-[18px] sm:h-[18px]" />
-            </Link>
+            {initial ? (
+              <Link
+                href="/profile"
+                aria-label="My Account"
+                title={profile?.name}
+                className="flex items-center justify-center w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] rounded-full bg-maroon text-white text-[12px] font-semibold shrink-0 hover:bg-maroon-dark transition-colors"
+              >
+                {initial}
+              </Link>
+            ) : (
+              <Link href="/login" aria-label="Sign in" className="flex items-center text-charcoal hover:text-maroon transition-colors">
+                <UserIcon className="w-[17px] h-[17px] sm:w-[18px] sm:h-[18px]" />
+              </Link>
+            )}
             <Link href="/wishlist" aria-label="Wishlist" className="relative flex items-center gap-1.5 text-charcoal hover:text-maroon transition-colors">
               <HeartIcon className="w-[17px] h-[17px] sm:w-[18px] sm:h-[18px]" />
               {wishlistCount > 0 && (
@@ -121,7 +161,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Category strip (desktop only — collapses into the mobile nav dropdown instead) */}
+      {/* Category strip (desktop only — folded into the mobile nav dropdown above instead) */}
       <div className="hidden md:block bg-ink text-white sticky top-0 z-[99]">
         <div className="container">
           <ul className="flex items-center justify-center gap-7 py-2.5 font-mono text-[12px] font-medium uppercase tracking-[0.06em]">
@@ -180,6 +220,9 @@ export default function Header() {
             display: block;
             padding: 12px 0;
             border-bottom: none;
+          }
+          .mobile-category-list {
+            margin-top: 4px;
           }
         }
         @keyframes navDrop {
