@@ -81,7 +81,7 @@ export default function ShopClient({ categories: CATEGORIES, products: PRODUCTS 
       </section>
 
       {/* Category quick-select pills */}
-      <div className="container pt-12 pb-8">
+      <div className="container pt-5 pb-3">
         <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
           <button
             onClick={() => setCategories([])}
@@ -105,7 +105,7 @@ export default function ShopClient({ categories: CATEGORIES, products: PRODUCTS 
         </div>
       </div>
 
-      <section className="section-tight">
+      <section className="section-tight !pt-2">
         <div className="container grid md:grid-cols-[260px_1fr] gap-9 items-start">
           <aside className="hidden md:block sticky top-24">
             <FilterPanel {...filterPanelProps} />
