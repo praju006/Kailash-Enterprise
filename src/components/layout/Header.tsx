@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useStore } from '@/context/StoreContext';
@@ -39,7 +40,15 @@ export default function Header() {
 
       <header className="sticky top-0 z-[100] bg-white">
         <div className="container flex items-center justify-between py-5">
-          <Link href="/" className="font-anton text-xl sm:text-[26px] text-maroon tracking-[0.02em] uppercase whitespace-nowrap leading-none">
+          <Link href="/" className="flex items-center gap-2.5 font-anton text-xl sm:text-[26px] text-maroon tracking-[0.02em] uppercase whitespace-nowrap leading-none">
+<Image
+  src="/logo.jpeg"
+  alt="Kailash Enterprises"
+  width={56}
+  height={56}
+  className="h-12 w-12 sm:h-14 sm:w-14 object-cover rounded-full border border-gold/40"
+  priority
+/>
             Kailash <span className="text-gold-deep">Enterprises</span>
           </Link>
 
