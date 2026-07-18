@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CatalogCategory, CatalogProduct } from '@/lib/catalog';
 import ProductCard from '@/components/product/ProductCard';
@@ -23,6 +23,25 @@ export default function ShopClient({ categories: CATEGORIES, products: PRODUCTS 
   const [onlyNew, setOnlyNew] = useState(false);
   const [sort, setSort] = useState<SortKey>('featured');
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Scroll-fade affordance for the horizontally-scrollable category pill row.
+  const pillsRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  function handlePillsScroll() {
+    const el = pillsRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }
+
+  useEffect(() => {
+    handlePillsScroll();
+    window.addEventListener('resize', handlePillsScroll);
+    return () => window.removeEventListener('resize', handlePillsScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories]);
 
   function toggleCategory(slug: string) {
     setCategories((prev) => (prev.includes(slug) ? prev.filter((c) => c !== slug) : [...prev, slug]));
@@ -82,26 +101,45 @@ export default function ShopClient({ categories: CATEGORIES, products: PRODUCTS 
 
       {/* Category quick-select pills */}
       <div className="container pt-5 pb-3">
-        <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
-          <button
-            onClick={() => setCategories([])}
-            className={`shrink-0 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.06em] border transition-colors ${
-              categories.length === 0 ? 'bg-maroon text-white border-maroon' : 'bg-white border-line text-ink hover:border-maroon'
-            }`}
+        <div className="relative">
+          <div
+            ref={pillsRef}
+            onScroll={handlePillsScroll}
+            className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar"
           >
-            All
-          </button>
-          {CATEGORIES.map((c) => (
             <button
-              key={c.slug}
-              onClick={() => toggleCategory(c.slug)}
+              onClick={() => setCategories([])}
               className={`shrink-0 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.06em] border transition-colors ${
-                categories.includes(c.slug) ? 'bg-maroon text-white border-maroon' : 'bg-white border-line text-ink hover:border-maroon'
+                categories.length === 0 ? 'bg-maroon text-white border-maroon' : 'bg-white border-line text-ink hover:border-maroon'
               }`}
             >
-              {c.name}
+              All
             </button>
-          ))}
+            {CATEGORIES.map((c) => (
+              <button
+                key={c.slug}
+                onClick={() => toggleCategory(c.slug)}
+                className={`shrink-0 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.06em] border transition-colors ${
+                  categories.includes(c.slug) ? 'bg-maroon text-white border-maroon' : 'bg-white border-line text-ink hover:border-maroon'
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+
+          {/* left fade — only visible once the row has been scrolled */}
+          <div
+            className={`pointer-events-none absolute left-0 top-0 bottom-1 w-8 bg-gradient-to-r from-white to-transparent transition-opacity duration-200 ${
+              canScrollLeft ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+          {/* right fade — only visible while there's more to scroll to */}
+          <div
+            className={`pointer-events-none absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-white to-transparent transition-opacity duration-200 ${
+              canScrollRight ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
         </div>
       </div>
 
@@ -118,7 +156,7 @@ export default function ShopClient({ categories: CATEGORIES, products: PRODUCTS 
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search sarees by name..."
-                className="flex-1 px-3.5 py-2.5 border border-line"
+                className="flex-1 min-w-0 px-3.5 py-2.5 border border-line"
               />
               <button
                 onClick={() => setDrawerOpen(true)}

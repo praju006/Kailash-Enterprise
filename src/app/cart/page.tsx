@@ -50,24 +50,24 @@ export default function CartPage() {
             <Link href="/shop" className="btn-primary inline-flex px-8 py-3.5">Continue Shopping</Link>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 items-start reveal">
-            <div>
+          <div className="grid lg:grid-cols-[1fr_340px] gap-6 lg:gap-8 items-start reveal min-w-0">
+            <div className="min-w-0">
               {/* Mobile: stacked item cards */}
               <div className="md:hidden space-y-3">
                 {cart.map((item) => {
                   const p = getProduct(item.id);
                   if (!p) return null;
                   return (
-                    <div key={`${item.id}-${item.color}`} className="flex gap-3.5 bg-white border border-line p-3">
+                    <div key={`${item.id}-${item.color}`} className="flex gap-3.5 bg-white border border-line p-3 min-w-0">
                       <Link href={`/product/${p.id}`} className="w-[84px] h-[104px] overflow-hidden shrink-0 border border-line">
                         <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover object-top" />
                       </Link>
                       <div className="flex-1 min-w-0 flex flex-col">
-                        <Link href={`/product/${p.id}`} className="font-head text-maroon-dark leading-snug">{p.name}</Link>
+                        <Link href={`/product/${p.id}`} className="font-head text-maroon-dark leading-snug truncate">{p.name}</Link>
                         <div className="font-mono text-[10.5px] text-ink-soft mt-0.5">Colour: {item.color || 'Default'}</div>
                         <div className="font-bold text-maroon-dark text-sm mt-1">{formatPrice(p.price * item.qty)}</div>
                         <div className="mt-auto pt-2 flex items-center justify-between gap-2">
-                          <div className="inline-flex items-center border border-line overflow-hidden">
+                          <div className="inline-flex items-center border border-line overflow-hidden shrink-0">
                             <button aria-label="Decrease quantity" onClick={() => updateQty(item.id, item.color, item.qty - 1)} className="w-10 h-10 flex items-center justify-center hover:bg-cream-dark">
                               <MinusIcon className="w-3.5 h-3.5" />
                             </button>
@@ -76,7 +76,7 @@ export default function CartPage() {
                               <PlusIcon className="w-3.5 h-3.5" />
                             </button>
                           </div>
-                          <button onClick={() => removeFromCart(item.id, item.color)} className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-maroon underline">Remove</button>
+                          <button onClick={() => removeFromCart(item.id, item.color)} className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-maroon underline shrink-0">Remove</button>
                         </div>
                       </div>
                     </div>
@@ -134,25 +134,25 @@ export default function CartPage() {
               </div>
             </div>
 
-            <div className="bg-white border border-gold/40 p-5 sm:p-6 shadow-custom-sm lg:sticky lg:top-24">
+            <div className="bg-white border border-gold/40 p-5 sm:p-6 shadow-custom-sm lg:sticky lg:top-24 w-full min-w-0">
               <h3 className="mt-0 font-head">Order Summary</h3>
-              <div className="flex justify-between mb-3 text-sm"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
+              <div className="flex justify-between gap-2 mb-3 text-sm"><span>Subtotal</span><span className="shrink-0">{formatPrice(subtotal)}</span></div>
               {discount > 0 && (
-                <div className="flex justify-between mb-3 text-sm text-success"><span>Discount ({promo})</span><span>−{formatPrice(discount)}</span></div>
+                <div className="flex justify-between gap-2 mb-3 text-sm text-success"><span>Discount ({promo})</span><span className="shrink-0">−{formatPrice(discount)}</span></div>
               )}
-              <div className="flex justify-between mb-3 text-sm"><span>Shipping</span><span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
-              <div className="flex justify-between font-bold text-lg text-maroon-dark border-t border-line pt-3.5 mt-3.5">
-                <span>Total</span><span>{formatPrice(total)}</span>
+              <div className="flex justify-between gap-2 mb-3 text-sm"><span>Shipping</span><span className="shrink-0">{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
+              <div className="flex justify-between gap-2 font-bold text-lg text-maroon-dark border-t border-line pt-3.5 mt-3.5">
+                <span>Total</span><span className="shrink-0">{formatPrice(total)}</span>
               </div>
 
-              <div className="flex gap-2 my-4">
+              <div className="flex flex-wrap gap-2 my-4">
                 <input
                   value={promoInput}
                   onChange={(e) => setPromoInput(e.target.value)}
                   placeholder="Promo code"
                   className="flex-1 min-w-0 px-3 py-2.5 border border-line text-sm"
                 />
-                <button onClick={handleApplyPromo} className="btn-outline px-4 text-[10.5px]">Apply</button>
+                <button onClick={handleApplyPromo} className="btn-outline px-4 text-[10.5px] shrink-0">Apply</button>
               </div>
               <p className="text-xs text-ink-soft -mt-2 mb-4">Try <strong>SAREE10</strong> or <strong>WELCOME15</strong></p>
 
